@@ -9,6 +9,7 @@ O script gera dados aleatórios usando a biblioteca faker, cria 8 arquivos tempo
 ## Pré-requisitos
 - Python 3.x
 - Faker Lib: `pip install faker`
+- Random Lib: `pip install random`
 
 ## Uso
 1. Clone o repositório ou copie o script para o seu ambiente local.
