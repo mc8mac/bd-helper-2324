@@ -3,8 +3,15 @@
 ## Projeto de Bases de Dados - Instituto Superior Técnico 2023-24
 Este repositório contém um script Python desenvolvido para popular uma tabela SQL como parte do projeto de Bases de Dados do Instituto Superior Técnico no ano letivo de 2023-24.
 
+
 ## Descrição
 O script gera dados aleatórios usando a biblioteca faker, cria 8 arquivos temporários em formato CSV e depois converte esses arquivos em um único arquivo .sql com instruções válidas para inserção na base de dados PostgreSQL.
+
+<p align=center>
+  <a href="https://skillicons.dev">
+    <img src="https://skillicons.dev/icons?i=python,postgres" />
+  </a>
+</p>
 
 ## Pré-requisitos
 - Python 3.x
