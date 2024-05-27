@@ -16,6 +16,7 @@ fake = faker.Faker("pt_PT")
 
 def get_random_address():
     address = fake.city() + " " + fake.street_name() + " " + fake.building_number() + " " + fake.postcode()
+    address = address.replace("'", "")
     return address
 
 def populate_clinics():
@@ -23,7 +24,7 @@ def populate_clinics():
     with open("clinica.csv","w", encoding='utf-8') as csvfile:
         csvfile.write("nome, telefone, morada\n")
         for i in range(MAX_CLINICS):
-            name = "Clínica " + fake.company()
+            name = "Clínica " + fake.company().replace("'","")
             phone = random.randint(900000000, 999999999)
             address = get_random_address()
             csvfile.write(f"{name},{phone},{address}\n")
@@ -45,7 +46,7 @@ def populate_nurses():
         for i in range(MAX_CLINICS):
             for j in range(MAX_NURSES):
                 nif = random.randint(100000000, 999999999)
-                name = fake.name()
+                name = fake.name().replace("'","")
                 phone = random.randint(900000000, 999999999)
                 address = get_random_address()
                 csvfile.write(f"{nif},{name},{phone},{address},{clinics[i][0]}\n")
@@ -65,7 +66,7 @@ def populate_medics():
         csvfile.write("nif, nome, telefone, morada, especialidade\n")
         for i in range(20):
             nif = random.randint(100000000, 999999999)
-            name = fake.name()
+            name = fake.name().replace("'","")
             phone = random.randint(900000000, 999999999)
             address = get_random_address()
             speciality = "clínica geral"
@@ -73,7 +74,7 @@ def populate_medics():
         for i in range(8):
             for speciality in SPECIALITIES:
                 nif = random.randint(100000000, 999999999)
-                name = fake.name()
+                name = fake.name().replace("'","")
                 phone = random.randint(900000000, 999999999)
                 address = get_random_address()
                 csvfile.write(f"{nif},{name},{phone},{address},{speciality}\n")
