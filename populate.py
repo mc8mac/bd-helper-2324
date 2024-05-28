@@ -12,115 +12,158 @@ MAX_PATIENTS = 5000
 MAX_NURSES = 6
 MAX_MEDICS = 60
 
+nifs = [i + 100000000 for i in range(5090)]
+phones = [i + 910000000 for i in range(5095)]
+snss = [i + 10000000000 for i in range(5090)]
+clinics = []
+nurses = []
+medics = []
+patients = []
+works = []
+appointments = []
+prescriptions = []
+observations = []
+
 fake = faker.Faker("pt_PT")
 
-def get_random_address():
+def get_random_address(char_limit=255):
     address = fake.city() + " " + fake.street_name() + " " + fake.building_number() + " " + fake.postcode()
     address = address.replace("'", "")
+    while len(address) > char_limit:
+        address = fake.city() + " " + fake.street_name() + " " + fake.building_number() + " " + fake.postcode()
+        address = address.replace("'", "")
     return address
 
-def populate_clinics():
-    # Creates a CSV file with the clinics
+def get_random_name(char_limit=80):
+    name = fake.first_name() + " " + fake.last_name()
+    name = name.replace("'", "")
+    while len(name) > char_limit:
+        name = fake.first_name() + " " + fake.last_name()
+        name = name.replace("'", "")
+    return name
+
+def get_random_last_name():
+    name = fake.last_name()
+    name = name.replace("'", "")
+    return name
+
+# clinica:
+# nome (varchar(80) UNIQUE NOT NULL)
+# telefone (varchar(15) UNIQUE NOT NULL)
+# morada (varchar(255) NOT NULL)
+
+def gen_clinics():
+    for i in range(MAX_CLINICS):
+        clinic = []
+        name = "Clinica "+ get_random_last_name()
+        clinic.append(name)
+        clinic.append(phones.pop(0))
+        clinic.append(get_random_address())
+        clinics.append(clinic)
     with open("clinica.csv","w", encoding='utf-8') as csvfile:
         csvfile.write("nome, telefone, morada\n")
-        for i in range(MAX_CLINICS):
-            name = "Clínica " + fake.company().replace("'","")
-            phone = random.randint(900000000, 999999999)
-            address = get_random_address()
-            csvfile.write(f"{name},{phone},{address}\n")
+        for i in clinics:
+            csvfile.write(f"{i[0]}, {i[1]}, {i[2]}\n")
 
-def read_clinics():
-    clinics = []
-    with open("clinica.csv", "r", encoding='utf-8') as csvfile:
-        next(csvfile) # Skip the header
-        for row in csvfile:
-            name, phone, address = row.strip().split(",")
-            clinics.append([name, phone, address])
-    return clinics
+# enfermeiro:
+# nif (char(9) PRIMARY KEY)
+# nome (varchar(80) UNIQUE NOT NULL)
+# telefone (varchar(15) NOT NULL)
+# morada (varchar(255) NOT NULL)
+# nome_clinica (varchar(80) NOT NULL references clinica(nome))
 
-def populate_nurses():
-    clinics = read_clinics()
-    # Creates a CSV file with the nurses
+def gen_nurses():
+    for i in range(MAX_NURSES):
+        for j in range(MAX_CLINICS):
+            nurse = []
+            nurse.append(nifs.pop(0))
+            nurse.append(get_random_name())
+            nurse.append(phones.pop(0))
+            nurse.append(get_random_address())
+            nurse.append(clinics[j][0])
+            nurses.append(nurse)
+            
     with open("enfermeiro.csv","w", encoding='utf-8') as csvfile:
         csvfile.write("nif, nome, telefone, morada, nome_clinica\n")
-        for i in range(MAX_CLINICS):
-            for j in range(MAX_NURSES):
-                nif = random.randint(100000000, 999999999)
-                name = fake.name().replace("'","")
-                phone = random.randint(900000000, 999999999)
-                address = get_random_address()
-                csvfile.write(f"{nif},{name},{phone},{address},{clinics[i][0]}\n")
+        for i in nurses:
+            csvfile.write(f"{i[0]}, {i[1]}, {i[2]}, {i[3]}, {i[4]}\n")
 
-def read_nurses():
-    nurses = []
-    with open("enfermeiro.csv", "r", encoding='utf-8') as csvfile:
-        next(csvfile) # Skip the header
-        for row in csvfile:
-            nif, name, phone, morada, clinic = row.strip().split(",")
-            nurse = [nif, name, phone, morada, clinic]
-            nurses.append(nurse)
-    return nurses
+# medico:
+# nif (char(9) PRIMARY KEY)
+# nome (varchar(80) UNIQUE NOT NULL)
+# telefone (varchar(15) NOT NULL)
+# morada (varchar(255) NOT NULL)
+# especialidade (varchar(80) NOT NULL)
+#20 médicos de especialidade ‘clínica geral’ e 40 outros distribuídos como entender por até 5
+# especialidades diferentes
 
-def populate_medics():
+def gen_medics():
+    for i in range(MAX_MEDICS):
+        medic = []
+        medic.append(nifs.pop(0))
+        medic.append(get_random_name())
+        medic.append(phones.pop(0))
+        medic.append(get_random_address())
+        if i < 20:
+            medic.append("clínica geral")
+        else:
+            medic.append(random.choice(SPECIALITIES))
+        medics.append(medic)
     with open("medico.csv","w", encoding='utf-8') as csvfile:
         csvfile.write("nif, nome, telefone, morada, especialidade\n")
-        for i in range(20):
-            nif = random.randint(100000000, 999999999)
-            name = fake.name().replace("'","")
-            phone = random.randint(900000000, 999999999)
-            address = get_random_address()
-            speciality = "clínica geral"
-            csvfile.write(f"{nif},{name},{phone},{address},{speciality}\n")
-        for i in range(8):
-            for speciality in SPECIALITIES:
-                nif = random.randint(100000000, 999999999)
-                name = fake.name().replace("'","")
-                phone = random.randint(900000000, 999999999)
-                address = get_random_address()
-                csvfile.write(f"{nif},{name},{phone},{address},{speciality}\n")
+        for i in medics:
+            csvfile.write(f"{i[0]}, {i[1]}, {i[2]}, {i[3]}, {i[4]}\n")
 
-def read_medics():
-    medics = []
-    with open("medico.csv", "r", encoding='utf-8') as csvfile:
-        next(csvfile) # Skip the header
-        for row in csvfile:
-            nif, name, phone, morada, speciality = row.strip().split(",")
-            medic = [nif, name, phone, morada, speciality]
-            medics.append(medic)
-    return medics
+# trabalha:
+# nif (char(9) NOT NULL references medico(nif))
+# nome (varchar(80) NOT NULL references clinica(nome))
+# dia_da_semana SMALLINT
+# PRIMARY KEY (nif, dia_da_semana)
+# Cada médico deve trabalhar em pelo menos duas clínicas, 
+# Cada Clínica tem pelo menos 8 médicos por dia
 
-def populate_trabalha():
-    nifs = [medic[0] for medic in read_medics()]
-    clinics = [clinic[0] for clinic in read_clinics()]
-    schedule = {nif: [] for nif in nifs}
-    clinic_doctors = {clinic: {day: [] for day in range(1, 8)} for clinic in clinics}
 
-    # Assign each doctor to two different clinics on different days
-    for nif in nifs:
-        clinic_days = random.sample(list(clinic_doctors.items()), 2)
-        for clinic, days in clinic_days:
-            day = random.choice(list(days.keys()))
-            while len(days[day]) >= 8:
-                day = random.choice(list(days.keys()))
-            schedule[nif].append((clinic, day))
-            days[day].append(nif)
+def gen_works():
+    days_of_week = list(range(7))  # 1 (Monday) to 7 (Sunday)
 
-    # Check if each clinic has at least 8 doctors for each day
-    for clinic, days in clinic_doctors.items():
-        for day, doctors in days.items():
-            while len(doctors) < 8:
-                nif = random.choice(nifs)
-                while (clinic, day) in schedule[nif]:
-                    nif = random.choice(nifs)
-                schedule[nif].append((clinic, day))
-                doctors.append(nif)
+    medic_clinic_count = {medic[0]: [] for medic in medics}
+    medic_day_count = {medic[0]: [] for medic in medics}
+    clinic_day_medic_count = {(clinic[0], day): 0 for clinic in clinics for day in days_of_week}
 
-    # Write the schedule to the CSV file
+    for _ in range(len(medics) * len(clinics) * len(days_of_week)):
+        medic = random.choice(medics)
+        while len(medic_day_count[medic[0]]) >= 7:
+            medic = random.choice(medics)
+            
+        clinic = random.choice(clinics)
+        day_of_week = random.choice(days_of_week)
+        
+        while day_of_week in medic_day_count[medic[0]]:
+            day_of_week = random.choice(days_of_week)
+            
+        if len(medic_clinic_count[medic[0]]) < 2 or clinic_day_medic_count[(clinic[0], day_of_week)] < 8:
+            works.append([medic[0], clinic[0], day_of_week])
+            medic_clinic_count[medic[0]].append(clinic[0])
+            medic_day_count[medic[0]].append(day_of_week)
+            clinic_day_medic_count[(clinic[0], day_of_week)] += 1
+
+    for medic in medics:
+        while len(medic_clinic_count[medic[0]]) < 2:
+            clinic = random.choice(clinics)
+            day_of_week = random.choice(days_of_week)
+            
+            while day_of_week in medic_day_count[medic[0]]:
+                day_of_week = random.choice(days_of_week)
+                
+            works.append([medic[0], clinic[0], day_of_week])
+            medic_clinic_count[medic[0]].append(clinic[0])
+            clinic_day_medic_count[(clinic[0], day_of_week)] += 1
+    
+    # Write to file
     with open("trabalha.csv","w", encoding='utf-8') as csvfile:
-        csvfile.write("nif, nome_clinica, dia_da_semana\n")
-        for nif, workdays in schedule.items():
-            for clinic, day in workdays:
-                csvfile.write(f"{nif},{clinic},{day}\n")
+        csvfile.write("nif, nome, dia_da_semana\n")
+        for work in works:
+            csvfile.write(f"{work[0]}, {work[1]}, {work[2]}\n")
 
 def read_trabalha():
     trabalha = []
@@ -131,139 +174,145 @@ def read_trabalha():
             trabalha.append([nif, clinic, weekday])
     return trabalha
 
-def populate_patients():
+
+# paciente:
+# ssn (char(11) PRIMARY KEY)
+# nif (char(9) UNIQUE NOT NULL)
+# nome (varchar(80) NOT NULL)
+# telefone (varchar(15) NOT NULL)
+# morada (varchar(255) NOT NULL)
+# data_nasc DATE NOT NULL
+
+def gen_patients():
+    for i in range(MAX_PATIENTS):
+        patient = []
+        patient.append(snss.pop(0))
+        patient.append(nifs.pop(0))
+        patient.append(get_random_name())
+        patient.append(phones.pop(0))
+        patient.append(get_random_address())
+        patient.append(fake.date_of_birth(minimum_age=18, maximum_age=92))
+        patients.append(patient)
     with open("paciente.csv","w", encoding='utf-8') as csvfile:
         csvfile.write("ssn, nif, nome, telefone, morada, data_nasc\n")
-        for i in range(MAX_PATIENTS):
-            ssn = random.randint(100000000, 999999999)
-            nif = random.randint(100000000, 999999999)
-            name = fake.name()
-            phone = random.randint(900000000, 999999999)
-            address = get_random_address()
-            birthdate = fake.date_of_birth(minimum_age=18, maximum_age=78)
-            csvfile.write(f"{ssn},{nif},{name},{phone},{address},{birthdate}\n")
+        for i in patients:
+            csvfile.write(f"{i[0]}, {i[1]}, {i[2]}, {i[3]}, {i[4]}, {i[5]}\n")
 
-def read_patients():
-    patients = []
-    with open("paciente.csv", "r", encoding='utf-8') as csvfile:
-        next(csvfile) # Skip the header
-        for row in csvfile:
-            ssn, nif, name, phone, morada, birthdate = row.strip().split(",")
-            patient = [ssn, nif, name, phone, morada, birthdate]
-            patients.append(patient)
-    return patients
+# consulta:
+# id SERIAL PRIMARY KEY
+# ssn (char (11) NOT NULL references paciente(ssn))
+# nif (char(9) NOT NULL references medico(nif))
+# nome (varchar(80) NOT NULL references clinica(nome))
+# data DATE NOT NULL
+# hora TIME NOT NULL
+# codigo_sns CHAR(12) UNIQUE
+# UNIQUE (ssn, data, hora)
+# UNIQUE (nif, data, hora)
+# Desde o início de 2023 até o fim de 2024 
+# Cada Clínica tem pelo menos 20 consultas por dia distribuidas por cada médico que trabalhou na clínica nesse dia
+# Cada médico tem pelo menos 2 consultas por dia que trabalhou
+# Cada Paciente tem pelo menos 1 consulta por ano
 
-def populate_consulta():
-    patients = [patient[0] for patient in read_patients()]
-    medics = [medic[0] for medic in read_medics()]
-    clinics = [clinic[0] for clinic in read_clinics()]
-    appointments = {}
-    clinic_appointments = {clinic: {date: [] for date in range(1, 731)} for clinic in clinics}  # 731 days in 2023 and 2024
-    medic_appointments = {medic: {date: [] for date in range(1, 731)} for medic in medics}
+import random
+from datetime import datetime, timedelta
 
-    # Assign each patient to a random clinic and doctor on a random day and time
-    for ssn in patients:
-        clinic = random.choice(clinics)
-        medic = random.choice(medics)
-        date = random.randint(1, 730)
-        time = random.randint(8, 20)  # Assuming the clinic operates from 8:00 to 20:00
-        snscod = random.randint(100000000000, 999999999999)
-        id = len(appointments) + 1
-        appointments[id] = (ssn, medic, clinic, date, time, snscod)
-        clinic_appointments[clinic][date].append(id)
-        medic_appointments[medic][date].append(id)
+def gen_appointments():
+    codigo_sns = 100000000000
+    id_counter = 1
+    dates = [datetime(2023, 1, 1) + timedelta(days=i) for i in range(730)]
+    weekdays = [date.weekday() for date in dates]
+    medic_date_hour_count = {medic[0]: {date: [] for date in dates} for medic in medics}
+    patient_year_count = {patient[0]: {2023: 0, 2024: 0} for patient in patients}
+    times = [(datetime.min + timedelta(hours=8+i//2, minutes=30*(i%2))).time() for i in range(24)]  # every 30 minutes from 8:00 to 20:00
+    nif_appointment_set = set()
+    ssn_appointment_set = set()
 
-    # Check if each clinic has at least 20 appointments for each day and each doctor has at least 2 appointments for each day
-    for clinic, dates in clinic_appointments.items():
-        for date, ids in dates.items():
-            while len(ids) < 20:
-                ssn = random.choice(patients)
-                medic = random.choice(medics)
-                time = random.randint(8, 20)
-                snscod = ''.join(random.choices('0123456789', k=12))
-                id = len(appointments) + 1
-                appointments[id] = (ssn, medic, clinic, date, time, snscod)
-                ids.append(id)
-                medic_appointments[medic][date].append(id)
-
-    for medic, dates in medic_appointments.items():
-        for date, ids in dates.items():
-            while len(ids) < 2:
-                ssn = random.choice(patients)
-                clinic = random.choice(clinics)
-                time = random.randint(8, 20)
-                snscod = ''.join(random.choices('0123456789', k=12))
-                id = len(appointments) + 1
-                appointments[id] = (ssn, medic, clinic, date, time, snscod)
-                ids.append(id)
-                clinic_appointments[clinic][date].append(id)
-
-    # Write the schedule to the CSV file
+    for date, weekday in zip(dates, weekdays):
+        for clinic in clinics:
+            medics_working_today = [work[0] for work in works if work[1] == clinic[0] and work[2] == weekday]
+            patients_today = random.sample(patients, random.randint(20,48))
+            
+            for patient in patients_today:
+                time = random.choice(times)
+                medic = random.choice(medics_working_today)
+                while time in medic_date_hour_count[medic][date] or (medic, date, time) in nif_appointment_set or (patient[0], date, time) in ssn_appointment_set:
+                    time = random.choice(times)
+                
+                nif_appointment_set.add((medic, date, time))
+                ssn_appointment_set.add((patient[0], date, time))
+                
+                appointments.append([id_counter, patient[0], medic, clinic[0], date.date(), time, codigo_sns])
+                id_counter += 1
+                codigo_sns += 1
+                patient_year_count[patient[0]][date.year] += 1
     with open("consulta.csv","w", encoding='utf-8') as csvfile:
         csvfile.write("id, ssn, nif, nome, data, hora, codigo_sns\n")
-        for id, (ssn, medic, clinic, date, time, snscod) in appointments.items():
-            date_str = (datetime.datetime(2023, 1, 1) + datetime.timedelta(days=date-1)).strftime('%Y-%m-%d')
-            csvfile.write(f"{id},{ssn},{medic},{clinic},{date_str},{time},{snscod}\n")
+        for appointment in appointments:
+            csvfile.write(f"{appointment[0]}, {appointment[1]}, {appointment[2]}, {appointment[3]}, {appointment[4]}, {appointment[5]}, {appointment[6]}\n")
 
-def read_consultas():
-    consulta = []
-    with open("consulta.csv", "r", encoding='utf-8') as csvfile:
-        next(csvfile) # Skip the header
-        for row in csvfile:
-            id, ssn, medic, clinic, date, time, snscod = row.strip().split(",")
-            consulta.append([id, ssn, medic, clinic, date, time, snscod])
-    return consulta
+# receita:
+# codigo_sns VARCHAR(12)
+# medicamento VARCHAR(155)
+# quantidade SMALLINT NOT NULL CHECK (quantidade > 0)
+# PRIMARY KEY (codigo_sns, medicamento)
+# 80% das consultas tem receita médica associada, 
+# e as receitas têm 1 a 6 medicamentos em
+# quantidades entre 1 e 3
 
-def populate_receita():
-    snscodes = [consulta[6] for consulta in read_consultas()]
+def gen_prescriptions():
+    for appointment in appointments:
+        if random.random() < 0.8:
+            medicine = ""
+            prescription = []
+            prescription.append(appointment[6])
+            for _ in range(random.randint(1, 6)):
+                medicine += random.choice(MEDICINE)[0] + " "
+            medicine.strip()
+            prescription.append(medicine)
+            prescription.append(random.randint(1, 3))
+            prescriptions.append(prescription)
+                
     with open("receita.csv","w", encoding='utf-8') as csvfile:
-        csvfile.write("codigo_ssn, medicamento, quantidade\n")
-        for snscod in snscodes:
-            if random.random() > 0.8:
-                continue
-            medicine_count = random.randint(1, 6)
-            drugs = random.sample(MEDICINE, medicine_count)
-            drugs = [drug[0] for drug in drugs]
-            while len(' '.join(drugs)) > 155:
-                drugs.pop()
-            medicine = ' '.join(drugs)
-            dosage = random.randint(1, 3)
-            csvfile.write(f"{snscod},{medicine},{dosage}\n")
+        csvfile.write("codigo_sns, medicamento, quantidade\n")
+        for prescription in prescriptions:
+            csvfile.write(f"{prescription[0]}, {prescription[1]}, {prescription[2]}\n")
 
-def read_receita():
-    receita = []
-    with open("receita.csv", "r", encoding='utf-8') as csvfile:
-        next(csvfile) # Skip the header
-        for row in csvfile:
-            snscod, medicine, dosage = row.strip().split(",")
-            receita.append([snscod, medicine, dosage])
-    return receita
+# observacao:
+# id INTEGER NOT NULL references consulta(id)
+# parametro VARCHAR(155) NOT NULL
+# valor FLOAT
+# PRIMARY KEY (id, parametro) Todas as consultas têm 1 a 5 
+# observações de sintomas (com parâmetro mas sem valor ("NULL")) e 0 a 3
+# observações métricas (com parâmetro e valor).
 
-def populate_observacao():
-    ids = [consulta[0] for consulta in read_consultas()]
+def gen_observations():
+    for appointment in appointments:
+        app_sypmtoms = []
+        for _ in range(random.randint(1, 5)):
+            observation = []
+            observation.append(appointment[0])
+            symptom = random.choice(SYMPTOMS)
+            while symptom in app_sypmtoms:
+                symptom = random.choice(SYMPTOMS) 
+            app_sypmtoms.append(symptom)
+            observation.append(symptom)
+            observation.append("NULL")
+            observations.append(observation)
+        for _ in range(random.randint(0, 3)):
+            observation = []
+            observation.append(appointment[0])
+            symptom = random.choice(METRICS)
+            while symptom in app_sypmtoms:
+                symptom = random.choice(METRICS)
+            app_sypmtoms.append(symptom)
+            observation.append(symptom)
+            observation.append(random.uniform(0, 100))
+            observations.append(observation)
+
     with open("observacao.csv","w", encoding='utf-8') as csvfile:
         csvfile.write("id, parametro, valor\n")
-        for id in ids:
-            symptoms_count = random.randint(1, 5)
-            symptoms = random.sample(SYMPTOMS, symptoms_count)
-            symptoms = [symptom for symptom in symptoms]
-            for symptom in symptoms:
-                csvfile.write(f"{id},{symptom},NULL\n")
-            metrics_count = random.randint(0, 3)
-            metrics = random.sample(METRICS, metrics_count)
-            metrics = [metric for metric in metrics]
-            for metric in metrics:
-                value = round(random.uniform(1, 100), 2)
-                csvfile.write(f"{id},{metric},{value}\n")
-
-def read_observacao():
-    observacao = []
-    with open("observacao.csv", "r", encoding='utf-8') as csvfile:
-        next(csvfile) # Skip the header
-        for row in csvfile:
-            id, observation, value = row.strip().split(",")
-            observacao.append([id, observation, value])
-    return observacao
+        for observation in observations:
+            csvfile.write(f"{observation[0]}, {observation[1]}, {observation[2]}\n")
 
 def csv_to_sql():
     with open("database.sql", "w", encoding='utf-8') as sqlfile:
@@ -273,10 +322,10 @@ def csv_to_sql():
             "(nome, telefone, morada)",
             "(nif, nome, telefone, morada, nome_clinica)",
             "(nif, nome, telefone, morada, especialidade)",
-            "(nif, nome_clinica, dia_da_semana)",
+            "(nif, nome, dia_da_semana)",
             "(ssn, nif, nome, telefone, morada, data_nasc)",
             "(id, ssn, nif, nome, data, hora, codigo_sns)",
-            "(codigo_ssn, medicamento, quantidade)",
+            "(codigo_sns, medicamento, quantidade)",
             "(id, parametro, valor)"
         ]
 
@@ -285,12 +334,12 @@ def csv_to_sql():
                 sqlfile.write(f"INSERT INTO {table} {column} VALUES\n")
                 rows = csvfile.readlines()[1:]  # Skip the header
                 for row in rows[:-1]:
-                    values = ", ".join([f"'{x}'" if isinstance(x, str) else str(x) for x in row.strip().split(",")])
+                    values = ",".join([f"'{x.strip()}'" if x.strip() != "NULL" else "NULL" for x in row.split(",")])
                     sqlfile.write(f"({values}),\n")
-                values = ", ".join([f"'{x}'" if isinstance(x, str) else str(x) for x in rows[-1].strip().split(",")])
+                values = ",".join([f"'{x.strip()}'" if x.strip() != "NULL" else "NULL" for x in rows[-1].split(",")])
                 sqlfile.write(f"({values});\n")  # Last row with semicolon
             sqlfile.write("\n")  # Add a newline between different tables
-
+            
 if __name__ == "__main__":
     while(True):
         print("Selecione a opção que deseja executar:")
@@ -299,21 +348,21 @@ if __name__ == "__main__":
         input_option = input()
 
         if input_option == "1":
-            populate_clinics()
+            gen_clinics()
             print("Clínicas criadas com sucesso!")
-            populate_nurses()
+            gen_nurses()
             print("Enfermeiros criados com sucesso!")
-            populate_medics()
+            gen_medics()
             print("Médicos criados com sucesso!")
-            populate_trabalha()
+            gen_works()
             print("Trabalha criado com sucesso!")
-            populate_patients()
+            gen_patients()
             print("Pacientes criados com sucesso!")
-            populate_consulta()
+            gen_appointments()
             print("Consultas criadas com sucesso!")
-            populate_receita()
+            gen_prescriptions()
             print("Receitas criadas com sucesso!")
-            populate_observacao()
+            gen_observations()
             print("Observações criadas com sucesso!")
             delete_csv = input("Se quiser realizar alguma mudança nos ficheiros CSV, faça-o agora.\nDepois de terminar, pressione 'Enter' para continuar.")
             csv_to_sql()
@@ -328,6 +377,5 @@ if __name__ == "__main__":
             print("Ficheiro SQL criado com sucesso!")
             break
             
-
         elif input_option == "q":
             break
