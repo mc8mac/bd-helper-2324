@@ -270,9 +270,15 @@ def gen_appointments():
 # 80% das consultas tem receita médica associada, 
 # e as receitas têm 1 a 6 medicamentos em
 # quantidades entre 1 e 3
+limit_date = datetime(2024, 5, 30).date()
 
 def gen_prescriptions():
     for appointment in appointments:
+        date = appointment[4]
+        
+        if date > limit_date:
+            break
+        
         if random.random() < 0.8:
             medicine = ""
             prescription = []
@@ -299,6 +305,9 @@ def gen_prescriptions():
 
 def gen_observations():
     for appointment in appointments:
+        date = appointment[4]
+        if date > limit_date:
+            break
         app_sypmtoms = []
         for _ in range(random.randint(1, 5)):
             observation = []
