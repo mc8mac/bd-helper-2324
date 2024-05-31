@@ -28,10 +28,10 @@ fake = faker.Faker("pt_PT")
 
 
 def get_random_address(char_limit=255):
-    address = fake.city() + " " + fake.street_name() + " " + fake.building_number() + " " + fake.postcode()
+    address = fake.street_name() +  " " + fake.postcode() + " " + fake.city()
     address = address.replace("'", "")
     while len(address) > char_limit:
-        address = fake.city() + " " + fake.street_name() + " " + fake.building_number() + " " + fake.postcode()
+        address = fake.street_name() +  " " + fake.postcode() + " " + fake.city()
         address = address.replace("'", "")
     return address
 
